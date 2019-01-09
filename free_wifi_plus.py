@@ -8,7 +8,7 @@ WIFI_CONFIG = {
 	"format"  : {
 		"ssid" : (lambda ssid : bool(re.match(r"[a-zA-Z0-9_]+", ssid))),
 		"key"  : (lambda key  : bool(re.match(r"[a-zA-Z0-9!@#$%^&*_]{8,}", key))),
-	}
+	},
 	"monitor" : {
 		"name"     : "free-wifi-monitor",
 		"interval" : 5000,
@@ -62,16 +62,16 @@ def acInit():
 
 def acLoad():
 	account_list     = {}
-	account_selected = ""
+	account_selected = None
 	with open(WIFI_CONFIG["file"], "r") as fr:
-		for account in fin.readlines():
-			ccount = line.strip()
+		for account in fr.readlines():
+			account = account.strip()
 			if not account:
 				continue
 			account  = account.split(',')
 			ssid 	 = account[0] 
 			key      = account[1]
-			selected = bool(len(account) > 3 and account[2] == WIFI_CONFIG["guard"])
+			selected = bool(len(account) > 2 and account[2] == WIFI_CONFIG["guard"])
 			account_list[ssid] = key
 			account_selected   = (ssid if selected else account_selected)
 	WIFI_ACCOUNTS_INFO["account_list"] = account_list
@@ -81,7 +81,7 @@ def acDump():
 	with open(WIFI_CONFIG["file"], "w") as fw:
 		account_list = WIFI_ACCOUNTS_INFO["account_list"]
 		for ssid in account_list:
-			key      = account_list[ssid]
+			key = account_list[ssid]
 			fw.write("{}\n".format(",".join((ssid,key,WIFI_CONFIG["guard"]) 
 				if ssid == WIFI_ACCOUNTS_INFO["selected"] else (ssid,key))))
 
@@ -91,6 +91,8 @@ def acRefresh():
 	# check selected ssid, if not choose a default one
 	if WIFI_ACCOUNTS_INFO["selected"] not in WIFI_ACCOUNTS_INFO["account_order"]:
 		WIFI_ACCOUNTS_INFO["selected"] = (WIFI_ACCOUNTS_INFO["account_order"][0] if WIFI_ACCOUNTS_INFO["account_order"] else None)
+	# DEBUG
+	LogP(WIFI_ACCOUNTS_INFO)
 
 def acFilter(ssid, key):
 	return bool(WIFI_CONFIG["format"]["ssid"](ssid) and WIFI_CONFIG["format"]["key"](key))
@@ -116,6 +118,7 @@ def acUpdate(ssid, key):
 def acDelete(idx):
 	if idx < 0 or idx >= len(WIFI_ACCOUNTS_INFO["account_order"]):
 		raise AccountNotFoundError
+	ssid = WIFI_ACCOUNTS_INFO["account_order"][idx]
 	del WIFI_ACCOUNTS_INFO["account_list"][ssid]
 	acRefresh()
 	acDump()
@@ -129,14 +132,14 @@ def acSelect(idx):
 ########################## CMD 模块 ##################################
 class CommandLines:
 	def __init__(self, cmds):
-		if not instanceof(cmds, map):
+		if not isinstance(cmds, dict):
 			raise TypeError("cmd map must be a dictionary")
 		self.cmds = cmds or {}
 	def run(self):
 		while 1:
 			try:
 				comd = input("\n>>")
-				comd = comd.split(' ')
+				comd = comd.strip().split(' ')
 				if comd[0] in self.cmds:
 					self.cmds[comd[0]](*(comd[1:] if len(comd) > 1 else []))
 				else:
@@ -146,21 +149,26 @@ class CommandLines:
 
 ########################## 指令逻辑流程 ##################################
 def InitWifi():
-	acInit()
 	checkDrivers()
+	acInit()
+	acLoad()
+	acRefresh()
 
 def checkDrivers():
 	LogN("Drivers checking ...")
 	if not wfCheck():
-		LogN("Sorry, your drivers not support wifi hotspot, any press to exit ...")
+		LogW("Sorry, your drivers not support wifi hotspot, any press to exit ...")
 		input()
 		quit()
 
 def StartWifi(*args, **kwargs):
-	# TODO: check accounts
+	if not WIFI_ACCOUNTS_INFO["selected"]:
+		LogW("There is no account in configuration file {file} yet, please new one ...".format(file=WIFI_CONFIG["file"]))
+		return
 	ssid = WIFI_ACCOUNTS_INFO["selected"]
 	key  = WIFI_ACCOUNTS_INFO["account_list"][ssid]
 	wfStart(ssid, key)
+	LogN("Wifi has started !!!")
 
 def StopWifi(*args, **kwargs):
 	wfStop()
@@ -175,7 +183,8 @@ def ShowWifi(*args, **kwargs):
 	key  = (accs[ssid] if ssid in accs else "")
 
 	LogN("Wifi State as follow:")
-	LogN("Wifi Name: {ssid}\nWifi Code: {key}".format(ssid=ssid,key=key))
+	LogN("Wifi Name: {ssid}".format(ssid=ssid))
+	LogN("Wifi Code: {key}".format(key=key))
 	LogN(stat)
 
 def ListAccount(*args, **kwargs):
@@ -207,6 +216,7 @@ def SelectAccount(*args, **kwargs):
 	try:
 		acidx = int(args[0])
 		acSelect(acidx)
+		LogN("Account {ssid} selected !!!".format(ssid=WIFI_ACCOUNTS_INFO["selected"]))
 	except AccountNotFoundError as err:
 		LogW(err)
 	except Exception as err:
@@ -223,7 +233,7 @@ def Clear(*args, **kwargs):
 
 def TipInfo():
 	LogP("============== Free Wifi =============")
-    LogP("""Support Command:\n  start | stop | status\n  new <ssid>:<key> | delete <tag>\n  list | select <tag>\n  clear | quit\n""")
+	LogP("""Support Command:\n  start | stop | show\n  new <ssid>:<key> | delete <tag>\n  list | select <tag>\n help | clear | quit\n""")
 
 def Quit(*args, **kwargs):
 	LogN("Wifi manger quit now ...")
@@ -240,9 +250,10 @@ CMD_LOGFUNCS = {
 	"list"	:	ListAccount, 
 	"select":	SelectAccount, 
 	# monitor
-	"spy"	:	StartMonitor,
-	"fade"	:	StopMonitor,
+	# "spy"	:	StartMonitor,
+	# "fade"	:	StopMonitor,
 	# control
+	"help"  :   TipInfo,
 	"clear"	:	Clear, 
 	"quit"	:	Quit, 
 }
