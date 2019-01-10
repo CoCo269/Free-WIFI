@@ -81,8 +81,6 @@ def acRefresh():
 	# check selected ssid, if not choose a default one
 	if WIFI_ACCOUNTS_INFO["selected"] not in WIFI_ACCOUNTS_INFO["account_order"]:
 		WIFI_ACCOUNTS_INFO["selected"] = (WIFI_ACCOUNTS_INFO["account_order"][0] if WIFI_ACCOUNTS_INFO["account_order"] else None)
-	# DEBUG
-	LogP(WIFI_ACCOUNTS_INFO)
 
 def acFilter(ssid, key):
 	return bool(WIFI_CONFIG["format"]["ssid"](ssid) and WIFI_CONFIG["format"]["key"](key))
