@@ -182,7 +182,7 @@ def ShowWifi(*args, **kwargs):
 	ssid = (grp.group(1) if grp else "")
 	key  = (accs[ssid] if ssid in accs else "")
 
-	LogN("Wifi State as follow:")
+	LogN("Wifi Status as follow:")
 	LogN("Wifi Name: {ssid}".format(ssid=ssid))
 	LogN("Wifi Code: {key}".format(key=key))
 	LogN(stat)
