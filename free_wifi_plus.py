@@ -1,19 +1,8 @@
-import os, sys
-import re
+import os, sys, re, subprocess
 from free_wifi_basekits import *
+from free_wifi_config import *
 
-WIFI_CONFIG = {
-	"file"    : "free-wifi-data.csv", 
-	"guard"   : "#",
-	"format"  : {
-		"ssid" : (lambda ssid : bool(re.match(r"[a-zA-Z0-9_]+", ssid))),
-		"key"  : (lambda key  : bool(re.match(r"[a-zA-Z0-9!@#$%^&*_]{8,}", key))),
-	},
-	"monitor" : {
-		"name"     : "free-wifi-monitor",
-		"interval" : 5000,
-	}
-}
+WIFI_CONFIG = WIFI_CONFIG
 
 WIFI_CMD = {
 	"check"   : "netsh wlan show drivers",
@@ -55,6 +44,7 @@ def wfStatus():
 	return "".join(os.popen(WIFI_CMD["status"]).readlines())
 
 ########################## ACCOUNT 管控模块 ##################################
+## 底层操作 ##
 def acInit():
 	file = WIFI_CONFIG["file"]
 	with open(file, 'a'):
@@ -97,7 +87,7 @@ def acRefresh():
 def acFilter(ssid, key):
 	return bool(WIFI_CONFIG["format"]["ssid"](ssid) and WIFI_CONFIG["format"]["key"](key))
 
-## 以下账户管理函数为基本操作的实现 ##
+## 顶层封装 ##
 def acListAll():
 	infos         = []
 	account_order = WIFI_ACCOUNTS_INFO["account_order"]
@@ -129,6 +119,40 @@ def acSelect(idx):
 	WIFI_ACCOUNTS_INFO["selected"] = WIFI_ACCOUNTS_INFO["account_order"][idx]
 	acDump()
 
+########################## 监控模块 ##################################
+## 底层操作 ##
+def mtCheckState():
+	# 当前路径下
+	return bool(SearchFilesInCondition(path=".", 
+		cond=(lambda obj:bool(obj.find(WIFI_CONFIG["monitor"]["prefix"]) >= 0))))
+
+def mtGenState():
+	uuid  = GenRandomUUID(WIFI_CONFIG["monitor"]["size"])
+	state = "{0}{1}".format(WIFI_CONFIG["monitor"]["prefix"], uuid)
+	with open(state, "w") as fw:
+		pass
+	return state
+
+def mtRmvState():
+	# 当前路径下
+	objs = os.listdir(".")
+	for obj in objs:
+		if os.path.isfile(obj) and obj.find(WIFI_CONFIG["monitor"]["prefix"]) >= 0:
+			os.remove(obj)
+
+def mtLaunchProc(state):
+	subprocess.Popen(["python", WIFI_CONFIG["monitor"]["proc"], state])
+
+## 顶层封装 ##
+def mtStart():
+	if mtCheckState():
+		return
+	state = mtGenState()
+	mtLaunchProc(state)
+
+def mtStop():
+	mtRmvState()
+
 ########################## CMD 模块 ##################################
 class CommandLines:
 	def __init__(self, cmds):
@@ -157,7 +181,7 @@ def InitWifi():
 def checkDrivers():
 	LogN("Drivers checking ...")
 	if not wfCheck():
-		LogW("Sorry, your drivers not support wifi hotspot, any press to exit ...")
+		LogW("Drivers not support wifi hotspot, any press to exit ...")
 		input()
 		quit()
 
@@ -169,8 +193,12 @@ def StartWifi(*args, **kwargs):
 	key  = WIFI_ACCOUNTS_INFO["account_list"][ssid]
 	wfStart(ssid, key)
 	LogN("Wifi has started !!!")
+	mtStart()
+	LogN("Monitor is running !!!")
 
 def StopWifi(*args, **kwargs):
+	mtStop()
+	LogN("Monitor is stopping !!!")
 	wfStop()
 	LogN("Wifi has stopped !!!")
 
@@ -222,12 +250,6 @@ def SelectAccount(*args, **kwargs):
 	except Exception as err:
 		LogW("Mismatch input format <tag>, your input is {}".format(args))
 
-def StartMonitor(*args, **kwargs):
-	pass
-
-def StopMonitor(*args, **kwargs):
-	pass
-
 def Clear(*args, **kwargs):
 	os.system("cls")
 
@@ -253,9 +275,6 @@ CMD_LOGFUNCS = {
 	"delete":	DeleteAccount, 
 	"list"	:	ListAccount, 
 	"select":	SelectAccount, 
-	# monitor
-	"spy"	:	StartMonitor,
-	"fade"	:	StopMonitor,
 	# control
 	"help"  :   TipInfo,
 	"clear"	:	Clear, 
