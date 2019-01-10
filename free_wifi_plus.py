@@ -122,11 +122,11 @@ def acSelect(idx):
 def mtCheckState():
 	# 当前路径下
 	return bool(SearchFilesInCondition(path=".", 
-		cond=(lambda obj:bool(obj.find(WIFI_CONFIG["monitor"]["prefix"]) >= 0))))
+		cond=(lambda obj:bool(obj.find(WIFI_CONFIG["monitor"]["state"]["prefix"]) >= 0))))
 
 def mtGenState():
-	uuid  = GenRandomUUID(WIFI_CONFIG["monitor"]["size"])
-	state = "{0}{1}".format(WIFI_CONFIG["monitor"]["prefix"], uuid)
+	uuid  = GenRandomUUID(WIFI_CONFIG["monitor"]["state"]["size"])
+	state = "{0}{1}".format(WIFI_CONFIG["monitor"]["state"]["prefix"], uuid)
 	with open(state, "w") as fw:
 		pass
 	return state
@@ -135,11 +135,13 @@ def mtRmvState():
 	# 当前路径下
 	objs = os.listdir(".")
 	for obj in objs:
-		if os.path.isfile(obj) and obj.find(WIFI_CONFIG["monitor"]["prefix"]) >= 0:
+		if os.path.isfile(obj) and obj.find(WIFI_CONFIG["monitor"]["state"]["prefix"]) >= 0:
 			os.remove(obj)
 
 def mtLaunchProc(state):
-	subprocess.Popen(["python", WIFI_CONFIG["monitor"]["proc"], state])
+	stdout = open(WIFI_CONFIG["monitor"]["stdio"]["stdout"], "wb")
+	stderr = open(WIFI_CONFIG["monitor"]["stdio"]["stderr"], "wb")
+	subprocess.Popen(["python", WIFI_CONFIG["monitor"]["proc"], state], stdout=stdout.fileno(), stderr=stderr.fileno())
 
 ## 顶层封装 ##
 def mtStart():
@@ -171,7 +173,7 @@ class CommandLines:
 
 ########################## 指令逻辑流程 ##################################
 def InitWifi():
-	checkDrivers()
+	# checkDrivers()
 	acInit()
 	acLoad()
 	acRefresh()

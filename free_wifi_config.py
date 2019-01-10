@@ -8,9 +8,15 @@ WIFI_CONFIG = {
 		"key"  : (lambda key  : bool(re.match(r"[a-zA-Z0-9!@#$%^&*_]{8,}", key))),
 	},
 	"monitor" : {
-		"prefix"   : "wifi_monitor_",
-		"size"     : 32,
-		"proc"     : "free_wifi_monitor.py",
+		"state"    : {
+			"prefix" : "wifi_monitor_",
+			"size"   : 32,
+		},
+		"proc"     : "free_wifi_monitor_boost.py",
 		"interval" : 15,
+		"stdio"    : {
+			"stdout" : "free_wifi_stdout.txt",
+			"stderr" : "free_wifi_stderr.txt",
+		},
 	}
 }
