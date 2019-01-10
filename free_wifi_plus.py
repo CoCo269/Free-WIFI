@@ -233,7 +233,11 @@ def Clear(*args, **kwargs):
 
 def TipInfo():
 	LogP("============== Free Wifi =============")
-	LogP("""Support Command:\n  start | stop | show\n  new <ssid>:<key> | delete <tag>\n  list | select <tag>\n help | clear | quit\n""")
+	LogP("Support Command:\n" +
+		 "  start            | stop     | show\n" +
+		 "  new <ssid>:<key> | delete <tag>\n" + 
+		 "  list             | select <tag>\n" + 
+		 "  help             | clear    | quit\n")
 
 def Quit(*args, **kwargs):
 	LogN("Wifi manger quit now ...")
@@ -250,8 +254,8 @@ CMD_LOGFUNCS = {
 	"list"	:	ListAccount, 
 	"select":	SelectAccount, 
 	# monitor
-	# "spy"	:	StartMonitor,
-	# "fade"	:	StopMonitor,
+	"spy"	:	StartMonitor,
+	"fade"	:	StopMonitor,
 	# control
 	"help"  :   TipInfo,
 	"clear"	:	Clear, 
@@ -265,4 +269,3 @@ if __name__ == '__main__':
 	cmd = CommandLines(CMD_LOGFUNCS)
 	TipInfo()
 	cmd.run()
-
