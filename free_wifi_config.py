@@ -10,7 +10,7 @@ WIFI_CONFIG = {
 	"monitor" : {
 		"state"    : {
 			"prefix" : "wifi_monitor_",
-			"size"   : 32,
+			"size"   : 32, # UUID 长度
 		},
 		"script"   : {
 			"vbs"    : "free_wifi_monitor_backgroud.vbs",
@@ -21,7 +21,7 @@ WIFI_CONFIG = {
 			"stdout" : "free_wifi_stdout.txt",
 			"stderr" : "free_wifi_stderr.txt",
 		},
-		"interval" : 15,
+		"interval" : 15, # 定时检查秒数
 	},
 	"dir"     : {
 		"log" 	: "./log",
