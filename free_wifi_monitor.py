@@ -12,7 +12,7 @@ def isRunning(state):
 def checkAbort():
 	res = "".join(os.popen("netsh wlan show hostednetwork").readlines())
 	grp = re.search(r"状态 *: *(.*)", res)
-	return bool(not grp or grp.group(1) == "不可用")
+	return bool(not grp or grp.group(1) != "已启动")
 
 def startWIFI():
 	os.system("netsh wlan start hostednetwork")
@@ -22,7 +22,7 @@ if __name__ == '__main__':
 	state = sys.argv[1]
 	LogN("Wifi monitor for {state} start !!!".format(state=state), flush=True)
 	while isRunning(state):
-		# LogN("Wifi monitor for {state} is checking ...".format(state=state), flush=True)
+		LogN("Wifi monitor for {state} is checking ...".format(state=state), flush=True)
 		if checkAbort():
 			LogN("Wifi monitor for {state} is retrying ...".format(state=state), flush=True)
 			startWIFI()

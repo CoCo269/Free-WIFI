@@ -15,7 +15,7 @@ WIFI_CONFIG = {
 		"vbs"      : "tmp/free_wifi_monitor_backgroud.vbs",
 		"boost"    : "free_wifi_monitor_boost.py",
 		"proc"     : "free_wifi_monitor.py",
-		"interval" : 15,
+		"interval" : 3,
 		"stdio"    : {
 			"stdout" : "log/free_wifi_stdout.txt",
 			"stderr" : "log/free_wifi_stderr.txt",
