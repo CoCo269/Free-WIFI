@@ -122,7 +122,7 @@ def acSelect(idx):
 def mtCheckState():
 	# 当前路径下
 	return bool(SearchFilesInCondition(path=".", 
-		cond=(lambda obj:bool(obj.find(WIFI_CONFIG["monitor"]["state"]["prefix"]) >= 0))))
+		cond=(lambda obj:bool(re.match(WIFI_CONFIG["monitor"]["state"]["prefix"], obj)))))
 
 def mtGenState():
 	uuid  = GenRandomUUID(WIFI_CONFIG["monitor"]["state"]["size"])
@@ -133,15 +133,16 @@ def mtGenState():
 
 def mtRmvState():
 	# 当前路径下
-	objs = os.listdir(".")
-	for obj in objs:
-		if os.path.isfile(obj) and obj.find(WIFI_CONFIG["monitor"]["state"]["prefix"]) >= 0:
-			os.remove(obj)
+	files = SearchFilesInCondition(path=".", cond=(lambda obj:bool(re.match(WIFI_CONFIG["monitor"]["state"]["prefix"], obj))))
+	for file in files:
+		os.remove(file)
 
 def mtLaunchProc(state):
-	stdout = open(WIFI_CONFIG["monitor"]["stdio"]["stdout"], "wb")
-	stderr = open(WIFI_CONFIG["monitor"]["stdio"]["stderr"], "wb")
-	subprocess.Popen(["python", WIFI_CONFIG["monitor"]["proc"], state], stdout=stdout.fileno(), stderr=stderr.fileno())
+	vbs = 'CreateObject("WScript.Shell").Run "python {proc} {state}",0'.format(proc=WIFI_CONFIG["monitor"]["boost"], state=state)
+	with open(WIFI_CONFIG["monitor"]["vbs"], "w", encoding="utf-8") as fw:
+		fw.write(vbs)
+	subprocess.call(["cscript.exe", WIFI_CONFIG["monitor"]["vbs"]])
+	# subprocess.Popen(["python", WIFI_CONFIG["monitor"]["boost"], state], stdout=stdout.fileno(), stderr=stderr.fileno())
 
 ## 顶层封装 ##
 def mtStart():
@@ -193,8 +194,8 @@ def StartWifi(*args, **kwargs):
 	key  = WIFI_ACCOUNTS_INFO["account_list"][ssid]
 	wfStart(ssid, key)
 	LogN("Wifi has started !!!")
+	LogN("Monitor is on the way !!!")
 	mtStart()
-	LogN("Monitor is running !!!")
 
 def StopWifi(*args, **kwargs):
 	mtStop()

@@ -12,8 +12,10 @@ WIFI_CONFIG = {
 			"prefix" : "wifi_monitor_",
 			"size"   : 32,
 		},
-		"proc"     : "free_wifi_monitor_boost.py",
-		"interval" : 15,
+		"vbs"      : "free_wifi_monitor_backgroud.vbs",
+		"boost"    : "free_wifi_monitor_boost.py",
+		"proc"     : "free_wifi_monitor.py",
+		"interval" : 3,
 		"stdio"    : {
 			"stdout" : "free_wifi_stdout.txt",
 			"stderr" : "free_wifi_stderr.txt",
