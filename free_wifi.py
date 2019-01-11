@@ -183,7 +183,7 @@ class CommandLines:
 
 ########################## 指令逻辑流程 ##################################
 def InitWifi():
-	# checkDrivers()
+	checkDrivers()
 	acInit()
 	acLoad()
 	acRefresh()
