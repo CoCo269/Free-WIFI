@@ -21,7 +21,7 @@ WIFI_CONFIG = {
 			"stdout" : "free_wifi_stdout.txt",
 			"stderr" : "free_wifi_stderr.txt",
 		},
-		"interval" : 3,
+		"interval" : 15,
 	},
 	"dir"     : {
 		"log" 	: "./log",
