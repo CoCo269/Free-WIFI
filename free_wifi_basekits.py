@@ -37,7 +37,7 @@ def GenRandomUUID(size=16):
 # 搜索符合指定条件的文件名
 def SearchFilesInCondition(path, cond=(lambda x:False)):
 	if isinstance(path, str) and os.path.isdir(path):
-		return tuple(obj for obj in os.listdir(path) if os.path.isfile(obj) and cond(obj))
+		return tuple(obj for obj in os.listdir(path) if os.path.isfile("/".join((path, obj))) and cond(obj))
 	return ()
 
 if __name__ == "__main__":

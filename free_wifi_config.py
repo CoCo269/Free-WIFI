@@ -1,7 +1,7 @@
 import re
 
 WIFI_CONFIG = {
-	"file"    : "free-wifi-data.csv", 
+	"account" : "free-wifi-account.csv", 
 	"guard"   : "#",
 	"format"  : {
 		"ssid" : (lambda ssid : bool(re.match(r"[a-zA-Z0-9_]+", ssid))),
@@ -12,13 +12,20 @@ WIFI_CONFIG = {
 			"prefix" : "wifi_monitor_",
 			"size"   : 32,
 		},
-		"vbs"      : "tmp/free_wifi_monitor_backgroud.vbs",
-		"boost"    : "free_wifi_monitor_boost.py",
-		"proc"     : "free_wifi_monitor.py",
-		"interval" : 3,
-		"stdio"    : {
-			"stdout" : "log/free_wifi_stdout.txt",
-			"stderr" : "log/free_wifi_stderr.txt",
+		"script"   : {
+			"vbs"    : "free_wifi_monitor_backgroud.vbs",
+			"boost"  : "free_wifi_monitor_boost.py",
+			"proc"   : "free_wifi_monitor.py",
 		},
+		"stdio"    : {
+			"stdout" : "free_wifi_stdout.txt",
+			"stderr" : "free_wifi_stderr.txt",
+		},
+		"interval" : 3,
+	},
+	"dir"     : {
+		"log" 	: "./log",
+		"tmp" 	: "./tmp",
+		"data"	: "./data", 
 	}
 }

@@ -45,15 +45,17 @@ def wfStatus():
 
 ########################## ACCOUNT 管控模块 ##################################
 ## 底层操作 ##
+def acFilePath():
+	return "/".join((WIFI_CONFIG["dir"]["data"], WIFI_CONFIG["account"]))
+
 def acInit():
-	file = WIFI_CONFIG["file"]
-	with open(file, 'a'):
+	with open(acFilePath(), 'a'):
 		pass
 
 def acLoad():
 	account_list     = {}
 	account_selected = None
-	with open(WIFI_CONFIG["file"], "r") as fr:
+	with open(acFilePath(), "r") as fr:
 		for account in fr.readlines():
 			account = account.strip()
 			if not account:
@@ -68,7 +70,7 @@ def acLoad():
 	WIFI_ACCOUNTS_INFO["selected"]     = account_selected
 
 def acDump():
-	with open(WIFI_CONFIG["file"], "w") as fw:
+	with open(acFilePath(), "w") as fw:
 		account_list = WIFI_ACCOUNTS_INFO["account_list"]
 		for ssid in account_list:
 			key = account_list[ssid]
@@ -110,39 +112,46 @@ def acDelete(idx):
 	del WIFI_ACCOUNTS_INFO["account_list"][ssid]
 	acRefresh()
 	acDump()
+	return ssid
 
 def acSelect(idx):
 	if idx < 0 or idx >= len(WIFI_ACCOUNTS_INFO["account_order"]):
 		raise AccountNotFoundError
-	WIFI_ACCOUNTS_INFO["selected"] = WIFI_ACCOUNTS_INFO["account_order"][idx]
+	ssid = WIFI_ACCOUNTS_INFO["selected"] = WIFI_ACCOUNTS_INFO["account_order"][idx]
 	acDump()
+	return ssid
 
 ########################## 监控模块 ##################################
 ## 底层操作 ##
+def mtTempPath(file):
+	return "/".join((WIFI_CONFIG["dir"]["tmp"], file))
+
+def mtStatePath(state):
+	return mtTempPath(state)
+
 def mtCheckState():
 	# 当前路径下
-	return bool(SearchFilesInCondition(path=".", 
+	return bool(SearchFilesInCondition(path=WIFI_CONFIG["dir"]["tmp"], 
 		cond=(lambda obj:bool(re.match(WIFI_CONFIG["monitor"]["state"]["prefix"], obj)))))
 
 def mtGenState():
 	uuid  = GenRandomUUID(WIFI_CONFIG["monitor"]["state"]["size"])
 	state = "{0}{1}".format(WIFI_CONFIG["monitor"]["state"]["prefix"], uuid)
-	with open(state, "w") as fw:
+	with open(mtStatePath(state), "w") as fw:
 		pass
 	return state
 
 def mtRmvState():
-	# 当前路径下
-	files = SearchFilesInCondition(path=".", cond=(lambda obj:bool(re.match(WIFI_CONFIG["monitor"]["state"]["prefix"], obj))))
+	files = SearchFilesInCondition(path=WIFI_CONFIG["dir"]["tmp"], 
+		cond=(lambda obj:bool(re.match(WIFI_CONFIG["monitor"]["state"]["prefix"], obj))))
 	for file in files:
-		os.remove(file)
+		os.remove(mtStatePath(file))
 
 def mtLaunchProc(state):
-	vbs = 'CreateObject("WScript.Shell").Run "python {proc} {state}",0'.format(proc=WIFI_CONFIG["monitor"]["boost"], state=state)
-	with open(WIFI_CONFIG["monitor"]["vbs"], "w", encoding="utf-8") as fw:
+	vbs = 'CreateObject("WScript.Shell").Run "python {proc} {state}",0'.format(proc=WIFI_CONFIG["monitor"]["script"]["boost"], state=state)
+	with open(mtTempPath(WIFI_CONFIG["monitor"]["script"]["vbs"]), "w", encoding="utf-8") as fw:
 		fw.write(vbs)
-	subprocess.call(["cscript.exe", WIFI_CONFIG["monitor"]["vbs"]])
-	# subprocess.Popen(["python", WIFI_CONFIG["monitor"]["boost"], state], stdout=stdout.fileno(), stderr=stderr.fileno())
+	subprocess.call(["cscript.exe", mtTempPath(WIFI_CONFIG["monitor"]["script"]["vbs"])])
 
 ## 顶层封装 ##
 def mtStart():
@@ -188,7 +197,7 @@ def checkDrivers():
 
 def StartWifi(*args, **kwargs):
 	if not WIFI_ACCOUNTS_INFO["selected"]:
-		LogW("There is no account in configuration file {file} yet, please new one ...".format(file=WIFI_CONFIG["file"]))
+		LogW("There is no account in configuration file {file} yet, please new one ...".format(file=acFilePath()))
 		return
 	ssid = WIFI_ACCOUNTS_INFO["selected"]
 	key  = WIFI_ACCOUNTS_INFO["account_list"][ssid]
@@ -227,6 +236,7 @@ def UpdateAccount(*args, **kwargs):
 	try:
 		ssid, key = args[0].split(":")
 		acUpdate(ssid, key)
+		LogN("Account {ssid} updated !!!".format(ssid=ssid))
 	except IncorrectFormatError as err:
 		LogW(err)
 	except Exception as err:
@@ -235,7 +245,8 @@ def UpdateAccount(*args, **kwargs):
 def DeleteAccount(*args, **kwargs):
 	try:
 		acidx = int(args[0])
-		acDelete(acidx)
+		ssid  = acDelete(acidx)
+		LogN("Account {ssid} deleted !!!".format(ssid=ssid))
 	except AccountNotFoundError as err:
 		LogW(err)
 	except Exception as err:
@@ -244,8 +255,8 @@ def DeleteAccount(*args, **kwargs):
 def SelectAccount(*args, **kwargs):
 	try:
 		acidx = int(args[0])
-		acSelect(acidx)
-		LogN("Account {ssid} selected !!!".format(ssid=WIFI_ACCOUNTS_INFO["selected"]))
+		ssid  = acSelect(acidx)
+		LogN("Account {ssid} selected !!!".format(ssid=ssid))
 	except AccountNotFoundError as err:
 		LogW(err)
 	except Exception as err:

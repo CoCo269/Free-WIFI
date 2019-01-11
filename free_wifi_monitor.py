@@ -6,7 +6,7 @@ WIFI_CONFIG = WIFI_CONFIG
 
 def isRunning(state):
 	# 当前路径下
-	return bool(SearchFilesInCondition(path=".", 
+	return bool(SearchFilesInCondition(path=WIFI_CONFIG["dir"]["tmp"], 
 		cond=(lambda obj:bool(obj.find(state) >= 0))))
 
 def checkAbort():
